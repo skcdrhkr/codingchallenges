@@ -33,4 +33,14 @@ public class TreeNode {
         this.left = left;
         this.right = right;
     }
+
+    @Override
+    public String toString() {
+        return "TreeNode{" +
+                "weight=" + weight +
+                ", data=" + data +
+                ", left=" + left +
+                ", right=" + right +
+                '}';
+    }
 }
