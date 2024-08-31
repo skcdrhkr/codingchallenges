@@ -2,25 +2,25 @@ package org.cc.compression;
 
 public class TreeNode {
     int weight;
-    Character data;
+    int data;
     TreeNode left;
     TreeNode right;
 
     public TreeNode() {
         weight = -1;
-        data = null;
+        data = -1;
         left = null;
         right = null;
     }
 
     public TreeNode(int weight) {
         this.weight = weight;
-        this.data = null;
+        this.data = -1;
         left = null;
         right = null;
     }
 
-    public TreeNode(int weight, Character data) {
+    public TreeNode(int weight, int data) {
         this.weight = weight;
         this.data = data;
         this.left = null;
@@ -29,7 +29,7 @@ public class TreeNode {
 
     public TreeNode(int weight, TreeNode left, TreeNode right) {
         this.weight = weight;
-        this.data = null;
+        this.data = -1;
         this.left = left;
         this.right = right;
     }
