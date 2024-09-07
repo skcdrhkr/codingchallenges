@@ -1,14 +1,13 @@
 package org.cc.redislite;
 
+import org.cc.redislite.resp.RESPHandler;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
-
 public class RESPHandlerTest {
 
+    //todo: Write tests for set expiry
     public static RESPHandler respHandler;
 
     @BeforeAll
