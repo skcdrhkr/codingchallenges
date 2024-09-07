@@ -5,6 +5,7 @@ import org.cc.redislite.cache.RedisStorage;
 import org.cc.redislite.exception.SyntaxErrorException;
 
 import java.util.Arrays;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RedisProcessor {
@@ -17,7 +18,7 @@ public class RedisProcessor {
 
     private final ThreadLocal<RedisStorage> threadLocalStorage = ThreadLocal.withInitial(RedisStorage::new);
 
-    public RedisStorage getRedisStorage() {
+    private RedisStorage getRedisStorage() {
         return threadLocalStorage.get();
     }
 
@@ -36,10 +37,80 @@ public class RedisProcessor {
                 case ECHO -> handleEcho(inputCommand);
                 case SET -> handleSetEntry(inputCommand);
                 case GET -> handleGetEntry(inputCommand);
+                case EXISTS -> handleExists(inputCommand);
+                case DEL -> handleDelEntry(inputCommand);
+                case INCR -> handleIncr(inputCommand);
+                case DECR -> handleDecr(inputCommand);
             };
         } catch (IllegalArgumentException e) {
             return respHandler.serializedErrorMessage("ERR unknown command '" + inputCommand[0] + "', with args beginning with: " + Arrays.stream(inputCommand).skip(1).map("'%s'"::formatted).collect(Collectors.joining(" ")));
         }
+    }
+
+    private String handleDecr(String[] inputCommand) {
+        RedisStorage storage = getRedisStorage();
+        if (inputCommand.length != 2) {
+            return respHandler.serializedErrorMessage(WRONG_ARGS.formatted("decr"));
+        }
+        String key = inputCommand[1];
+        String value = storage.getValue(key);
+        long longValue;
+        try {
+            longValue = (value == null) ? 0 : Long.parseLong(value);
+            longValue -= 1;
+            storage.setEntry(key, Long.toString(longValue));
+        } catch (NumberFormatException e) {
+            return respHandler.serializedErrorMessage("ERR value is not an integer or out of range");
+        }
+        return respHandler.serializedInteger(longValue);
+    }
+
+    private String handleIncr(String[] inputCommand) {
+        RedisStorage storage = getRedisStorage();
+        if (inputCommand.length != 2) {
+            return respHandler.serializedErrorMessage(WRONG_ARGS.formatted("incr"));
+        }
+        String key = inputCommand[1];
+        String value = storage.getValue(key);
+        long longValue;
+        try {
+            longValue = (value == null) ? 0 : Long.parseLong(value);
+            longValue += 1;
+            storage.setEntry(key, Long.toString(longValue));
+        } catch (NumberFormatException e) {
+            return respHandler.serializedErrorMessage("ERR value is not an integer or out of range");
+        }
+        return respHandler.serializedInteger(longValue);
+    }
+
+    private String handleDelEntry(String[] inputCommand) {
+        RedisStorage storage = getRedisStorage();
+        Set<String> cacheKeys = storage.getKeySet();
+        if (inputCommand.length < 2) {
+            return respHandler.serializedErrorMessage(WRONG_ARGS.formatted("del"));
+        }
+        int keyCount = 0;
+        for (int ind = 1; ind < inputCommand.length; ind++) {
+            if (cacheKeys.contains(inputCommand[ind])) {
+                storage.removeCacheKey(inputCommand[ind]);
+                keyCount += 1;
+            }
+        }
+        return respHandler.serializedInteger((long) keyCount);
+    }
+
+    private String handleExists(String[] inputCommand) {
+        Set<String> storage = getRedisStorage().getKeySet();
+        if (inputCommand.length < 2) {
+            return respHandler.serializedErrorMessage(WRONG_ARGS.formatted("exists"));
+        }
+        int keyCount = 0;
+        for (int ind = 1; ind < inputCommand.length; ind++) {
+            if (storage.contains(inputCommand[ind])) {
+                keyCount += 1;
+            }
+        }
+        return respHandler.serializedInteger((long) keyCount);
     }
 
     private String handleGetEntry(String[] inputCommand) {

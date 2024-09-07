@@ -71,4 +71,8 @@ public class RESPHandler {
                 "\r\n";
     }
 
+    public String serializedInteger(Long num) {
+        return ":" + num.toString() + "\r\n";
+    }
+
 }

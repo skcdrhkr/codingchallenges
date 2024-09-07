@@ -5,5 +5,9 @@ public enum RedisCommand {
     GET,
     PING,
     ECHO,
-    COMMAND;
+    COMMAND,
+    EXISTS,
+    DEL,
+    INCR,
+    DECR;
 }
