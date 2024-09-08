@@ -1,4 +1,4 @@
 package org.cc.redislite.cache;
 
-record RedisField(String value, long setTime, long expiryTime) {
+record RedisField(Object value, long setTime, long expiryTime) {
 }

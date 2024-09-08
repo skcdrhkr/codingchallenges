@@ -7,7 +7,7 @@ import java.util.Set;
 public class RedisStorage {
     private final Map<String, RedisField> storage = new HashMap<>();
 
-    public String getValue(String key) {
+    public Object getValue(String key) {
         long curTime = System.currentTimeMillis();
         if (!storage.containsKey(key)) return null;
         long expiryTime = storage.get(key).expiryTime();
@@ -26,11 +26,11 @@ public class RedisStorage {
         return storage.get(key).expiryTime();
     }
 
-    public void setEntry(String key, String value) {
+    public void setEntry(String key, Object value) {
         setEntry(key, value, System.currentTimeMillis(), Long.MAX_VALUE);
     }
 
-    public void setEntry(String key, String value, long curTime, long expiryTime) {
+    public void setEntry(String key, Object value, long curTime, long expiryTime) {
         storage.put(key, new RedisField(value, curTime, expiryTime));
     }
 
