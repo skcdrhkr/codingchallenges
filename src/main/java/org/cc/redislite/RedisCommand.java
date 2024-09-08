@@ -9,5 +9,8 @@ public enum RedisCommand {
     EXISTS,
     DEL,
     INCR,
-    DECR;
+    DECR,
+    LPUSH,
+    RPUSH,
+    LRANGE;
 }

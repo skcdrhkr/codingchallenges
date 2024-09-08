@@ -41,9 +41,9 @@ public class RESPHandler {
         return inputCommand.toArray(new String[0]);
     }
 
-    public String serializedBulkStringArray(String[] responseArray) {
+    public String serializedBulkStringArray(ArrayList<String> responseArray) {
         StringBuilder serializedResponse = new StringBuilder();
-        serializedResponse.append("*").append(responseArray.length).append("\r\n");
+        serializedResponse.append("*").append(responseArray.size()).append("\r\n");
         for (String cur : responseArray) {
             serializedResponse.append("$").append(cur.length()).append("\r\n");
             serializedResponse.append(cur).append("\r\n");
