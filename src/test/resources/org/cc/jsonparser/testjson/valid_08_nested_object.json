@@ -1,0 +1,11 @@
+{
+  "user": {
+    "profile": {
+      "name": "Alice",
+      "settings": {
+        "theme": "dark",
+        "notifications": true
+      }
+    }
+  }
+}
