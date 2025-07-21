@@ -1,0 +1,5 @@
+{
+  "max_safe_integer": 9007199254740991,
+  "min_safe_integer": -9007199254740991,
+  "small_decimal": 0.000000000000001
+}
