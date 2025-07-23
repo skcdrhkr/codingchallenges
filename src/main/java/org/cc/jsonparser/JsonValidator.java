@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Stack;
 
 public class JsonValidator {
 
@@ -15,8 +14,9 @@ public class JsonValidator {
     private static final Character DELIM_STRING = '"';
     private static final Character COLON = ':';
     private static final Character COMMA = ',';
-    private static Stack<String> stack = new Stack<>();
     private static int position = 0;
+    private static int len;
+    private static char[] input;
 
     /**
      * json := value
@@ -52,95 +52,98 @@ public class JsonValidator {
     }
 
     public static boolean validateJSON(String content) {
-        content = content.trim();
+        content = cleanUpWhiteSpaces(content);
         if (content.isEmpty())
             return false;
 
-        char[] input = content.toCharArray();
+        input = content.toCharArray();
         position = 0;
-        return parseJSON(input);
+        len = input.length;
+        return parseJSON() && reachedEnd();
     }
 
-    private static boolean parseJSON(char[] input) {
+    private static boolean parseJSON() {
+
+        if (reachedEnd())
+            return false;
         char start = input[position];
 
         if (start == START_OBJECT) {
-            return parseJsonObject(input);
+            return parseJsonObject();
         } else if (start == START_ARRAY) {
-            return parseJsonArray(input);
+            return parseJsonArray();
         } else if (start == DELIM_STRING) {
-            return parseString(input);
+            return parseString();
         } else if (Character.isDigit(start) || start == '+' || start == '-') {
-            return parseNumber(input);
+            return parseNumber();
         } else if (start == 'f' || start == 't') {
-            return parseBoolean(input);
+            return parseBoolean();
         } else if (start == 'n') {
-            return parseNull(input);
+            return parseNull();
         } else {
             return false;
         }
     }
 
-    private static boolean parseJsonObject(char[] input) {
-        int len = input.length;
+    private static boolean parseJsonObject() {
         boolean result = true;
         position += 1;
+        if (input[position] == END_OBJECT) {
+            position += 1;
+            return true;
+        }
 
-        while (position < len && input[position] != END_OBJECT) {
-            parseWhiteSpaces(input);
+        while (position < len) {
             if (input[position] != DELIM_STRING) {
                 return false;
             }
-            result &= parseString(input);
-            parseWhiteSpaces(input);
-            if (input[position] != COLON)
+            result &= parseString();
+
+            if (reachedEnd() || input[position] != COLON)
                 return false;
             position += 1;
-            parseWhiteSpaces(input);
-            result &= parseJSON(input);
-            parseWhiteSpaces(input);
+
+            result &= parseJSON();
+            if (reachedEnd()) return false;
             if (input[position] != COMMA) {
                 break;
-            } else if (position + 1 < len && input[position + 1] == '}') {
-                return false;
             }
             position += 1;
         }
 
-        if (input[position] != END_OBJECT) {
+        if (reachedEnd() || input[position] != END_OBJECT) {
             return false;
         }
         position += 1;
         return result;
     }
 
-    private static boolean parseJsonArray(char[] input) {
-        int len = input.length;
+    private static boolean parseJsonArray() {
         boolean result = true;
-        // parseWhiteSpaces(input);
         position += 1;
+        if (input[position] == END_ARRAY) {
+            position += 1;
+            return true;
+        }
 
-        while (position < len && input[position] != END_ARRAY) {
-            parseWhiteSpaces(input);
-            result &= parseJSON(input);
-            parseWhiteSpaces(input);
+        while (position < len) {
+            result &= parseJSON();
+            if (reachedEnd()) return false;
             if (input[position] != COMMA) {
-                if (input[position] != END_ARRAY) {
-                    return false;
-                }
                 break;
-            } else if (position + 1 < len && input[position + 1] == ']') {
-                return false;
             }
             position += 1;
+        }
+
+        if (reachedEnd() || input[position] != END_ARRAY) {
+            return false;
         }
 
         position += 1;
         return result;
     }
 
-    private static boolean parseNull(char[] input) {
-        int len = input.length;
+    private static boolean parseNull() {
         if (position + 4 <= len && "null".equals(String.valueOf(input, position, 4))) {
             position += 4;
             return true;
@@ -148,8 +151,7 @@ public class JsonValidator {
         return false;
     }
 
-    private static boolean parseBoolean(char[] input) {
-        int len = input.length;
+    private static boolean parseBoolean() {
         // true, false
         if (position + 4 <= len && "true".equals(String.valueOf(input, position, 4))) {
             position += 4;
@@ -161,10 +163,10 @@ public class JsonValidator {
         return false;
     }
 
-    private static boolean parseNumber(char[] input) {
+    private static boolean parseNumber() {
         int endIndex = position;
-        int len = input.length;
         boolean containsPeriod = false;
+        String number;
 
         if (input[endIndex] == '+' || input[endIndex] == '-') {
             endIndex++;
@@ -179,15 +181,21 @@ public class JsonValidator {
             }
             endIndex++;
         }
+
+        number = String.valueOf(input, position, endIndex - position);
+        if (number.length() > 1 && number.charAt(0) == '0' && number.charAt(1) != '.') {
+            return false;
+        }
+
         try {
             if (containsPeriod) {
-                Double.parseDouble(String.valueOf(input, position, endIndex - position));
+                Double.parseDouble(number);
             } else {
-                Long.valueOf(String.valueOf(input, position, endIndex - position));
+                Long.valueOf(number);
             }
         } catch (NumberFormatException e) {
             try {
-                BigInteger bigInteger = new BigInteger(String.valueOf(input, position, endIndex - position));
+                new BigInteger(number);
             } catch (NumberFormatException exception) {
                 return false;
             }
@@ -197,20 +205,38 @@ public class JsonValidator {
         return true;
     }
 
-    private static boolean parseString(char[] input) {
-        int len = input.length;
+    private static boolean parseString() {
         int endIndex = position + 1;
         while (endIndex < len && input[endIndex] != '"') {
             endIndex++;
+        }
+        String parsedString = new String(input, position + 1, endIndex - position);
+        if (containsSingleBackSpace(parsedString)) {
+            return false;
         }
         position = endIndex + 1;
         return true;
     }
 
-    private static void parseWhiteSpaces(char[] input) {
-        int len = input.length;
-        while (position < len && Character.isWhitespace(input[position])) {
-            position++;
-        }
+    private static boolean containsSingleBackSpace(String parsedString) {
+        int index = parsedString.indexOf("\\");
+        if (index == -1) return false;
+        return !(index < parsedString.length() - 1 && parsedString.charAt(index + 1) == '\\');
+    }
+
+    private static String cleanUpWhiteSpaces(String content) {
+        content = content.trim();
+        content = content.replaceAll("\\s*\\{\\s*", "{");
+        content = content.replaceAll("\\s*}\\s*", "}");
+        content = content.replaceAll("\\s*\\[\\s*", "[");
+        content = content.replaceAll("\\s*]\\s*", "]");
+        content = content.replaceAll("\\s*:\\s*", ":");
+        content = content.replaceAll("\\s*,\\s*", ",");
+
+        return content;
+    }
+
+    private static boolean reachedEnd() {
+        return position >= len;
     }
 }
