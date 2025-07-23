@@ -45,9 +45,9 @@ public class JsonValidatorComprehensiveTest {
             "./testjson/invalid_18_invalid_escape.json",
             "./testjson/invalid_19_leading_zero.json",
             "./testjson/invalid_20_incomplete_object.json",
-            "./testjson/invalid_21_bare_string.json",
-            "./testjson/invalid_22_bare_number.json",
-            "./testjson/invalid_23_bare_boolean.json",
+            "./testjson/valid_21_bare_string.json",
+            "./testjson/valid_22_bare_number.json",
+            "./testjson/valid_23_bare_boolean.json",
             "./testjson/invalid_24_semicolon_separator.json",
             "./testjson/invalid_25_hex_number.json"
     };
@@ -244,18 +244,18 @@ public class JsonValidatorComprehensiveTest {
     }
 
     @Test
-    public void testInvalid_21_BareString() {
-        validateJsonFile("./testjson/invalid_21_bare_string.json", false);
+    public void testValid_21_BareString() {
+        validateJsonFile("./testjson/valid_21_bare_string.json",true );
     }
 
     @Test
-    public void testInvalid_22_BareNumber() {
-        validateJsonFile("./testjson/invalid_22_bare_number.json", false);
+    public void testValid_22_BareNumber() {
+        validateJsonFile("./testjson/valid_22_bare_number.json", true);
     }
 
     @Test
-    public void testInvalid_23_BareBoolean() {
-        validateJsonFile("./testjson/invalid_23_bare_boolean.json", false);
+    public void testValid_23_BareBoolean() {
+        validateJsonFile("./testjson/valid_23_bare_boolean.json", true);
     }
 
     @Test

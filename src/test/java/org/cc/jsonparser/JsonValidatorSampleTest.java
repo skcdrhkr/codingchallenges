@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class JsonValidatorTest {
+public class JsonValidatorSampleTest {
 
     private static final String[] validJsons = {
             "./step1/valid.json",
