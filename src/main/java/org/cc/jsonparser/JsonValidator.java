@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 
 public class JsonValidator {
 
@@ -38,11 +40,11 @@ public class JsonValidator {
         Path path = Path.of(args[0]);
         try {
             String content = Files.readString(path);
-            boolean isValid = validateJSON(content);
+            boolean isValid = validateJson(content);
             if (isValid) {
-                System.out.println("Input file contains a Valid JSON.");
+                System.out.println("Input file contains a Valid Json.");
             } else {
-                System.out.println("Input file doesn't contain a Valid JSON");
+                System.out.println("Input file doesn't contain a Valid Json");
                 System.exit(1);
             }
         } catch (IOException e) {
@@ -51,7 +53,7 @@ public class JsonValidator {
 
     }
 
-    public static boolean validateJSON(String content) {
+    public static boolean validateJson(String content) {
         content = cleanUpWhiteSpaces(content);
         if (content.isEmpty())
             return false;
@@ -59,10 +61,10 @@ public class JsonValidator {
         input = content.toCharArray();
         position = 0;
         len = input.length;
-        return parseJSON() && reachedEnd();
+        return parseJson() && reachedEnd();
     }
 
-    private static boolean parseJSON() {
+    private static boolean parseJson() {
 
         if (reachedEnd())
             return false;
@@ -93,17 +95,19 @@ public class JsonValidator {
             return true;
         }
 
+        Set<String> jsonKeys = new HashSet<>();
+
         while (position < len) {
             if (input[position] != DELIM_STRING) {
                 return false;
             }
-            result &= parseString();
+            result &= parseJsonKeys(jsonKeys);
 
             if (reachedEnd() || input[position] != COLON)
                 return false;
             position += 1;
 
-            result &= parseJSON();
+            result &= parseJson();
             if (reachedEnd()) return false;
             if (input[position] != COMMA) {
                 break;
@@ -118,6 +122,23 @@ public class JsonValidator {
         return result;
     }
 
+    private static boolean parseJsonKeys(Set<String> jsonKeys) {
+
+        int endIndex = position + 1;
+        while (endIndex < len && input[endIndex] != '"') {
+            endIndex++;
+        }
+        String parsedString = new String(input, position + 1, endIndex - position);
+        if (jsonKeys.contains(parsedString)) return false;
+        jsonKeys.add(parsedString);
+        if (containsSingleBackSpace(parsedString)) {
+            return false;
+        }
+        position = endIndex + 1;
+        return true;
+
+    }
+
     private static boolean parseJsonArray() {
         boolean result = true;
         position += 1;
@@ -127,7 +148,7 @@ public class JsonValidator {
         }
 
         while (position < len) {
-            result &= parseJSON();
+            result &= parseJson();
             if (reachedEnd()) return false;
             if (input[position] != COMMA) {
                 break;
